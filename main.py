@@ -1,4 +1,6 @@
 import os.path
+import random
+
 import pygame
 
 
@@ -30,6 +32,19 @@ grid_size = 20
 board = [[Cell() for _ in range(grid_size)] for _ in range(grid_size)]
 
 
+def gen_field():
+    def gen_field_loop():
+        rand_row = random.randrange(0, 20)
+        rand_col = random.randrange(0, 20)
+        if board[rand_row][rand_col].type == WRONG:
+            gen_field_loop()
+        else:
+            board[rand_row][rand_col].type = WRONG
+
+    for v in range(42):
+        gen_field_loop()
+
+
 def click_action(event):
     row = event.pos[1] // 20
     col = event.pos[0] // 20
@@ -37,26 +52,29 @@ def click_action(event):
         pass
     else:
         if event.button == 1:
-            board[row][col].type = RIGHT
+            board[row][col].clicked = True
         elif event.button == 3:
-            board[row][col].type = MAYBE
+            if board[row][col].type is START:
+                board[row][col].type = MAYBE
+            elif board[row][col].type is MAYBE:
+                board[row][col].type = START
 
 
 def display():
     WIN.fill(GREY)
     for iy, rowOfCells in enumerate(board):
         for ix, cell in enumerate(rowOfCells):
-            color = (64, 64, 64) if cell.clicked else (164, 164, 164)
-            #pygame.draw.rect(WIN, color, (ix*20+1, iy*20+1, 18, 18))
-            status = cell.type
-            #status = WRONG if cell.clicked else START
-            WIN.blit(status, (ix*20+1, iy*20+1, 18, 18))
+            if cell.clicked:
+                WIN.blit(cell.type, (ix*20+1, iy*20+1, 18, 18))
+            else:
+                WIN.blit(RIGHT, (ix * 20 + 1, iy * 20 + 1, 18, 18))
     pygame.display.update()
 
 
 def main():
     clock = pygame.time.Clock()
     run = True
+    gen_field()
     while run:
         clock.tick(FPS)
         for event in pygame.event.get():
