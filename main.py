@@ -6,12 +6,13 @@ import pygame
 
 class Cell:
     def __init__(self):
-        self.clicked = True
-        self.type = START
+        self.clicked = False
+        self.type = RIGHT
+        self.checked = False
 
 
 pygame.init()
-WIDTH, HEIGHT = 400, 500
+WIDTH, HEIGHT = 400, 450
 WIN = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Minesweeper")
 GREY = (111, 111, 111)
@@ -24,60 +25,110 @@ FIVE = pygame.image.load(os.path.join('Assets', '5.png'))
 SIX = pygame.image.load(os.path.join('Assets', '6.png'))
 SEVEN = pygame.image.load(os.path.join('Assets', '7.png'))
 EIGHT = pygame.image.load(os.path.join('Assets', '8.png'))
-RIGHT = pygame.image.load(os.path.join('Assets', 'open.png'))
+START = pygame.image.load(os.path.join('Assets', 'open.png'))
 WRONG = pygame.image.load(os.path.join('Assets', 'red.png'))
 MAYBE = pygame.image.load(os.path.join('Assets', 'int.png'))
-START = pygame.image.load(os.path.join('Assets', 'grey.png'))
+RIGHT = pygame.image.load(os.path.join('Assets', 'grey.png'))
 grid_size = 20
 board = [[Cell() for _ in range(grid_size)] for _ in range(grid_size)]
+
+
+def find_near(iy, ix, tipo, call):
+    near = 0
+    try:
+        if (board[iy + 1][ix].type is tipo) and ((iy + 1) <= 19):
+            near += 1
+            if call == 2 and board[iy + 1][ix].clicked is False:
+                board[iy + 1][ix].clicked = True
+                find_near(iy + 1, ix, tipo, call)
+    except IndexError:
+        pass
+    try:
+        if (board[iy + 1][ix + 1].type is tipo) and (((ix + 1) <= 19) and (iy + 1) <= 19):
+            near += 1
+            if call == 2 and board[iy + 1][ix + 1].clicked is False:
+                board[iy + 1][ix + 1].clicked = True
+                find_near(iy + 1, ix + 1, tipo, call)
+    except IndexError:
+        pass
+    try:
+        if (board[iy][ix + 1].type is tipo) and ((ix + 1) <= 19):
+            near += 1
+            if call == 2 and board[iy][ix + 1].clicked is False:
+                board[iy][ix + 1].clicked = True
+                find_near(iy, ix + 1, tipo, call)
+    except IndexError:
+        pass
+    try:
+        if (board[iy - 1][ix].type is tipo) and ((iy - 1) >= 0):
+            near += 1
+            if call == 2 and board[iy - 1][ix].clicked is False:
+                board[iy - 1][ix].clicked = True
+                find_near(iy - 1, ix, tipo, call)
+    except IndexError:
+        pass
+    try:
+        if (board[iy - 1][ix - 1].type is tipo) and (((ix - 1) >= 0) and (iy - 1) >= 0):
+            near += 1
+            if call == 2 and board[iy - 1][ix - 1].clicked is False:
+                board[iy - 1][ix - 1].clicked = True
+                find_near(iy - 1, ix - 1, tipo, call)
+    except IndexError:
+        pass
+    try:
+        if (board[iy][ix - 1].type is tipo) and ((ix - 1) >= 0):
+            near += 1
+            if call == 2 and board[iy][ix - 1].clicked is False:
+                board[iy][ix - 1].clicked = True
+                find_near(iy, ix - 1, tipo, call)
+    except IndexError:
+        pass
+    try:
+        if (board[iy + 1][ix - 1].type is tipo) and (((iy + 1) <= 19) and (ix - 1) >= 0):
+            near += 1
+            if call == 2 and board[iy + 1][ix - 1].clicked is False:
+                board[iy + 1][ix - 1].clicked = True
+                find_near(iy + 1, ix - 1, tipo, call)
+    except IndexError:
+        pass
+    try:
+        if (board[iy - 1][ix + 1].type is tipo) and (((ix + 1) <= 19) and (iy - 1) >= 0):
+            near += 1
+            if call == 2 and board[iy - 1][ix + 1].clicked is False:
+                board[iy - 1][ix + 1].clicked = True
+                find_near(iy - 1, ix + 1, tipo, call)
+    except IndexError:
+        pass
+    if near > 0 and call == 2:
+        try:
+            if iy + 1 <= 19:
+                board[iy + 1][ix].clicked = True
+        except IndexError:
+            pass
+        try:
+            if iy - 1 >= 0:
+                board[iy - 1][ix].clicked = True
+        except IndexError:
+            pass
+        try:
+            if ix + 1 <= 19:
+                board[iy][ix + 1].clicked = True
+        except IndexError:
+            pass
+        try:
+            if ix - 1 >= 0:
+                board[iy][ix - 1].clicked = True
+        except IndexError:
+            pass
+
+    return near
 
 
 def find_bombs():
     for iy, rowOfCells in enumerate(board):
         for ix, cell in enumerate(rowOfCells):
             if cell.type is not WRONG:
-                near = 0
-                try:
-                    if (board[iy + 1][ix].type is WRONG) and ((iy + 1) <= 19):
-                        near += 1
-                except IndexError:
-                    pass
-                try:
-                    if (board[iy + 1][ix + 1].type is WRONG) and (((ix + 1) <= 19) and (iy + 1) <= 19):
-                        near += 1
-                except IndexError:
-                    pass
-                try:
-                    if (board[iy][ix + 1].type is WRONG) and ((ix + 1) <= 19):
-                        near += 1
-                except IndexError:
-                    pass
-                try:
-                    if (board[iy - 1][ix].type is WRONG) and ((iy - 1) >= 0):
-                        near += 1
-                except IndexError:
-                    pass
-                try:
-                    if (board[iy - 1][ix - 1].type is WRONG) and (((ix - 1) >= 0) and (iy - 1) >= 0):
-                        near += 1
-                except IndexError:
-                    pass
-                try:
-                    if (board[iy][ix - 1].type is WRONG) and ((ix - 1) >= 0):
-                        near += 1
-                except IndexError:
-                    pass
-                try:
-                    if (board[iy + 1][ix - 1].type is WRONG) and (((iy + 1) <= 19) and (ix - 1) >= 0):
-                        near += 1
-                except IndexError:
-                    pass
-                try:
-                    if (board[iy - 1][ix + 1].type is WRONG) and (((ix + 1) <= 19) and (iy - 1) >= 0):
-                        near += 1
-                except IndexError:
-                    pass
-
+                near = find_near(iy, ix, WRONG, 1)
                 match near:
                     case 1:
                         cell.type = ONE
@@ -95,6 +146,9 @@ def find_bombs():
                         cell.type = SEVEN
                     case 8:
                         cell.type = EIGHT
+                    case _:
+                        cell.type = RIGHT
+
 
 def gen_field():
     def gen_field_loop():
@@ -119,11 +173,14 @@ def click_action(event):
     else:
         if event.button == 1:
             board[row][col].clicked = True
+            if board[row][col].type is RIGHT:
+                find_near(row, col, RIGHT, 2)
+
         elif event.button == 3:
-            if board[row][col].type is START:
-                board[row][col].type = MAYBE
-            elif board[row][col].type is MAYBE:
-                board[row][col].type = START
+            if board[row][col].checked:
+                board[row][col].checked = False
+            else:
+                board[row][col].checked = True
 
 
 def display():
@@ -131,9 +188,11 @@ def display():
     for iy, rowOfCells in enumerate(board):
         for ix, cell in enumerate(rowOfCells):
             if cell.clicked:
-                WIN.blit(cell.type, (ix*20+1, iy*20+1, 18, 18))
+                WIN.blit(cell.type, (ix * 20 + 1, iy * 20 + 1, 18, 18))
+            elif cell.checked:
+                WIN.blit(MAYBE, (ix * 20 + 1, iy * 20 + 1, 18, 18))
             else:
-                WIN.blit(RIGHT, (ix * 20 + 1, iy * 20 + 1, 18, 18))
+                WIN.blit(START, (ix * 20 + 1, iy * 20 + 1, 18, 18))
     pygame.display.update()
 
 
