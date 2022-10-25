@@ -6,7 +6,7 @@ import pygame
 
 class Cell:
     def __init__(self):
-        self.clicked = False
+        self.clicked = True
         self.type = START
 
 
@@ -32,6 +32,70 @@ grid_size = 20
 board = [[Cell() for _ in range(grid_size)] for _ in range(grid_size)]
 
 
+def find_bombs():
+    for iy, rowOfCells in enumerate(board):
+        for ix, cell in enumerate(rowOfCells):
+            if cell.type is not WRONG:
+                near = 0
+                try:
+                    if (board[iy + 1][ix].type is WRONG) and ((iy + 1) <= 19):
+                        near += 1
+                except IndexError:
+                    pass
+                try:
+                    if (board[iy + 1][ix + 1].type is WRONG) and (((ix + 1) <= 19) and (iy + 1) <= 19):
+                        near += 1
+                except IndexError:
+                    pass
+                try:
+                    if (board[iy][ix + 1].type is WRONG) and ((ix + 1) <= 19):
+                        near += 1
+                except IndexError:
+                    pass
+                try:
+                    if (board[iy - 1][ix].type is WRONG) and ((iy - 1) >= 0):
+                        near += 1
+                except IndexError:
+                    pass
+                try:
+                    if (board[iy - 1][ix - 1].type is WRONG) and (((ix - 1) >= 0) and (iy - 1) >= 0):
+                        near += 1
+                except IndexError:
+                    pass
+                try:
+                    if (board[iy][ix - 1].type is WRONG) and ((ix - 1) >= 0):
+                        near += 1
+                except IndexError:
+                    pass
+                try:
+                    if (board[iy + 1][ix - 1].type is WRONG) and (((iy + 1) <= 19) and (ix - 1) >= 0):
+                        near += 1
+                except IndexError:
+                    pass
+                try:
+                    if (board[iy - 1][ix + 1].type is WRONG) and (((ix + 1) <= 19) and (iy - 1) >= 0):
+                        near += 1
+                except IndexError:
+                    pass
+
+                match near:
+                    case 1:
+                        cell.type = ONE
+                    case 2:
+                        cell.type = TWO
+                    case 3:
+                        cell.type = THREE
+                    case 4:
+                        cell.type = FOUR
+                    case 5:
+                        cell.type = FIVE
+                    case 6:
+                        cell.type = SIX
+                    case 7:
+                        cell.type = SEVEN
+                    case 8:
+                        cell.type = EIGHT
+
 def gen_field():
     def gen_field_loop():
         rand_row = random.randrange(0, 20)
@@ -43,6 +107,8 @@ def gen_field():
 
     for v in range(42):
         gen_field_loop()
+
+    find_bombs()
 
 
 def click_action(event):
