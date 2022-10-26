@@ -11,7 +11,6 @@ class Cell:
         self.checked = False
 
 
-pygame.init()
 WIDTH, HEIGHT = 400, 450
 WIN = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Minesweeper")
@@ -26,11 +25,21 @@ SIX = pygame.image.load(os.path.join('Assets', '6.png'))
 SEVEN = pygame.image.load(os.path.join('Assets', '7.png'))
 EIGHT = pygame.image.load(os.path.join('Assets', '8.png'))
 START = pygame.image.load(os.path.join('Assets', 'open.png'))
-WRONG = pygame.image.load(os.path.join('Assets', 'red.png'))
+BOMB = pygame.image.load(os.path.join('Assets', 'red.png'))
 MAYBE = pygame.image.load(os.path.join('Assets', 'int.png'))
 RIGHT = pygame.image.load(os.path.join('Assets', 'grey.png'))
+WRONG = pygame.image.load(os.path.join('Assets', 'bomb.png'))
 grid_size = 20
 board = [[Cell() for _ in range(grid_size)] for _ in range(grid_size)]
+
+
+def game_restart():
+    for iy, rows in enumerate(board):
+        for ix, cell in enumerate(rows):
+            cell.type = RIGHT
+            cell.clicked = False
+            cell.checked = False
+    gen_field()
 
 
 def find_near(iy, ix, tipo, call):
@@ -175,6 +184,13 @@ def click_action(event):
             board[row][col].clicked = True
             if board[row][col].type is RIGHT:
                 find_near(row, col, RIGHT, 2)
+            elif board[row][col].type is WRONG:
+                board[row][col].type = BOMB
+                for iy, rowOfCells in enumerate(board):
+                    for ix, cell in enumerate(rowOfCells):
+                        if cell.type is WRONG:
+                            cell.clicked = True
+                game_restart()
 
         elif event.button == 3:
             if board[row][col].checked:
@@ -197,6 +213,7 @@ def display():
 
 
 def main():
+    pygame.init()
     clock = pygame.time.Clock()
     run = True
     gen_field()
