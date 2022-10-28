@@ -9,12 +9,13 @@ class Cell:
         self.clicked = False
         self.type = RIGHT
         self.checked = False
+        self.clickable = True
 
 
-WIDTH, HEIGHT = 400, 450
+WIDTH, HEIGHT = 400, 440
 WIN = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Minesweeper")
-GREY = (111, 111, 111)
+FILL = (111, 111, 111)
 FPS = 60
 ONE = pygame.image.load(os.path.join('Assets', '1.png'))
 TWO = pygame.image.load(os.path.join('Assets', '2.png'))
@@ -29,8 +30,14 @@ BOMB = pygame.image.load(os.path.join('Assets', 'red.png'))
 MAYBE = pygame.image.load(os.path.join('Assets', 'int.png'))
 RIGHT = pygame.image.load(os.path.join('Assets', 'grey.png'))
 WRONG = pygame.image.load(os.path.join('Assets', 'bomb.png'))
+GENERIC = pygame.image.load(os.path.join('Assets', 'click_timer.png'))
+RESTART = pygame.image.load(os.path.join('Assets', 'restart.png'))
 grid_size = 20
 board = [[Cell() for _ in range(grid_size)] for _ in range(grid_size)]
+global winner
+global clicked
+global clicks
+global gamerunning
 
 
 def game_restart():
@@ -40,6 +47,12 @@ def game_restart():
             cell.clicked = False
             cell.checked = False
     gen_field()
+    global clicked
+    global clicks
+    global gamerunning
+    gamerunning = True
+    clicks = 0
+    clicked = False
 
 
 def find_near(iy, ix, tipo, call):
@@ -168,7 +181,7 @@ def gen_field():
         else:
             board[rand_row][rand_col].type = WRONG
 
-    for v in range(42):
+    for v in range(8):
         gen_field_loop()
 
     find_bombs()
@@ -177,8 +190,12 @@ def gen_field():
 def click_action(event):
     row = event.pos[1] // 20
     col = event.pos[0] // 20
+    checkedbombs = []
+    global gamerunning
     if row >= 20:
-        pass
+        if 440 > event.pos[1] > 400 and 280 > event.pos[0] > 120:
+            game_restart()
+            return False
     else:
         if event.button == 1:
             board[row][col].clicked = True
@@ -190,17 +207,29 @@ def click_action(event):
                     for ix, cell in enumerate(rowOfCells):
                         if cell.type is WRONG:
                             cell.clicked = True
-                game_restart()
+                return False
 
         elif event.button == 3:
             if board[row][col].checked:
                 board[row][col].checked = False
             else:
                 board[row][col].checked = True
+    for iy, rowOfCells in enumerate(board):
+        for ix, cell in enumerate(rowOfCells):
+            if not cell.clicked:
+                checkedbombs.append(cell)
+
+    if all(cell.type == WRONG for cell in checkedbombs):
+        return False
+
+    return True
 
 
-def display():
-    WIN.fill(GREY)
+def display(output):
+    WIN.fill(FILL)
+    WIN.blit(RESTART, (120, 400))
+    WIN.blit(GENERIC, (-1, 400, 11, 3))
+    WIN.blit(GENERIC, (281, 400, 118, 38))
     for iy, rowOfCells in enumerate(board):
         for ix, cell in enumerate(rowOfCells):
             if cell.clicked:
@@ -209,23 +238,63 @@ def display():
                 WIN.blit(MAYBE, (ix * 20 + 1, iy * 20 + 1, 18, 18))
             else:
                 WIN.blit(START, (ix * 20 + 1, iy * 20 + 1, 18, 18))
+    font_game = pygame.font.SysFont("Arial", 25)
+    font = pygame.font.Font.render(font_game, output, False, pygame.Color((255, 0, 0)))
+    label = pygame.font.Font.render(font_game, str(clicks), False, (255, 0, 0))
+    restart = pygame.font.Font.render(font_game, 'RESTART', False, (255, 0, 0))
+    WIN.blit(restart, (145, 407))
+    WIN.blit(label, (330, 407))
+    WIN.blit(font, (3, 407))
+
     pygame.display.update()
 
 
 def main():
+    response = True
+    global gamerunning
+    gamerunning = True
+    start_tick = pygame.time.get_ticks()
     pygame.init()
+    pygame.font.init()
+    global clicked
+    clicked = False
     clock = pygame.time.Clock()
     run = True
     gen_field()
+    clock.tick(FPS)
+    global clicks
+    clicks = 0
+    global winner
+    winner = 0
     while run:
-        clock.tick(FPS)
+        if not clicked:
+            start_tick = pygame.time.get_ticks()
+
+        ticks = pygame.time.get_ticks()
+        millis = (ticks - start_tick) % 1000
+        seconds = int((ticks - start_tick) / 1000 % 60)
+        minutes = int((ticks - start_tick) / 60000 % 24)
+        output = '{minutes:02d}:{seconds:02d}:{millis:02d}'.format(minutes=minutes, seconds=seconds, millis=millis)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                click_action(event)
-        display()
+            if event.type == pygame.MOUSEBUTTONDOWN and not clicked:
+                if event.pos[1] // 20 >= 20:
+                    click_action(event)
+                else:
+                    clicks += 1
+                    response = click_action(event)
+                    clicked = True
+            elif event.type == pygame.MOUSEBUTTONDOWN and clicked:
+                if event.pos[1] // 20 >= 20 or board[event.pos[1] // 20][event.pos[0] // 20].clicked:
+                    click_action(event)
+                else:
+                    clicks += 1
+                    response = click_action(event)
 
+        if gamerunning:
+            display(output)
+            gamerunning = response
     pygame.quit()
 
 
