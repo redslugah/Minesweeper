@@ -38,6 +38,7 @@ global winner
 global clicked
 global clicks
 global gamerunning
+global response
 
 
 def game_restart():
@@ -50,9 +51,11 @@ def game_restart():
     global clicked
     global clicks
     global gamerunning
+    global response
     gamerunning = True
     clicks = 0
     clicked = False
+    response = True
 
 
 def find_near(iy, ix, tipo, call):
@@ -181,7 +184,7 @@ def gen_field():
         else:
             board[rand_row][rand_col].type = WRONG
 
-    for v in range(8):
+    for v in range(45):
         gen_field_loop()
 
     find_bombs()
@@ -195,7 +198,7 @@ def click_action(event):
     if row >= 20:
         if 440 > event.pos[1] > 400 and 280 > event.pos[0] > 120:
             game_restart()
-            return False
+            return True
     else:
         if event.button == 1:
             board[row][col].clicked = True
@@ -250,6 +253,7 @@ def display(output):
 
 
 def main():
+    global response
     response = True
     global gamerunning
     gamerunning = True
@@ -275,6 +279,10 @@ def main():
         seconds = int((ticks - start_tick) / 1000 % 60)
         minutes = int((ticks - start_tick) / 60000 % 24)
         output = '{minutes:02d}:{seconds:02d}:{millis:02d}'.format(minutes=minutes, seconds=seconds, millis=millis)
+        if gamerunning:
+            display(output)
+            gamerunning = response
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
@@ -286,15 +294,13 @@ def main():
                     response = click_action(event)
                     clicked = True
             elif event.type == pygame.MOUSEBUTTONDOWN and clicked:
-                if event.pos[1] // 20 >= 20 or board[event.pos[1] // 20][event.pos[0] // 20].clicked:
-                    click_action(event)
+                if event.pos[1] // 20 >= 20:
+                    gamerunning = click_action(event)
                 else:
                     clicks += 1
                     response = click_action(event)
 
-        if gamerunning:
-            display(output)
-            gamerunning = response
+
     pygame.quit()
 
 
