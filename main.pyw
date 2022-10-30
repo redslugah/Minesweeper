@@ -194,6 +194,7 @@ def click_action(event):
     row = event.pos[1] // 20
     col = event.pos[0] // 20
     checkedbombs = []
+    global clicks
     global gamerunning
     if row >= 20:
         if 440 > event.pos[1] > 400 and 280 > event.pos[0] > 120:
@@ -201,6 +202,9 @@ def click_action(event):
             return True
     else:
         if event.button == 1:
+            if not board[row][col].clicked:
+                clicks += 1
+
             board[row][col].clicked = True
             if board[row][col].type is RIGHT:
                 find_near(row, col, RIGHT, 2)
@@ -215,7 +219,9 @@ def click_action(event):
         elif event.button == 3:
             if board[row][col].checked:
                 board[row][col].checked = False
+                clicks += 1
             else:
+                clicks -= 1
                 board[row][col].checked = True
     for iy, rowOfCells in enumerate(board):
         for ix, cell in enumerate(rowOfCells):
@@ -290,16 +296,13 @@ def main():
                 if event.pos[1] // 20 >= 20:
                     click_action(event)
                 else:
-                    clicks += 1
                     response = click_action(event)
                     clicked = True
             elif event.type == pygame.MOUSEBUTTONDOWN and clicked:
                 if event.pos[1] // 20 >= 20:
                     gamerunning = click_action(event)
                 else:
-                    clicks += 1
                     response = click_action(event)
-
 
     pygame.quit()
 
